@@ -4,27 +4,38 @@ set -e  # Exit on error
 
 # Function to show usage
 usage() {
-    echo "Start a Bitcoin regtest node with automatic mining and fund a faucet address"
+    echo "Start a Bitcoin regtest node with automatic mining and fund a predefined test faucet"
     echo
-    echo "Usage: $0 <faucet_address> [amount_btc] [mining_interval_seconds]"
+    echo "Usage: $0 [amount_btc] [mining_interval_seconds]"
     echo
     echo "Arguments:"
-    echo "  faucet_address             Address to receive test BTC"
-    echo "  amount_btc                 Amount of BTC to send (default: 100)"
+    echo "  amount_btc                 Amount of BTC to send to faucet (default: 100)"
     echo "  mining_interval_seconds    Block mining interval in seconds (default: 30)"
     echo
+    echo "Faucet Information(only for regtest):"
+    echo "  Private Key: 0xee01cfc3f08cdb020064f31ff1a993aa9ecc1d38e684665742faa705685532a6"
+    echo "  Address:     bcrt1qvj7e5av2eqrhhvle56f9aqtjpxgywwnt5tem5y"
+    echo
     echo "Example:"
-    echo "  $0 bcrt1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-    echo "  $0 bcrt1qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 50 60"
+    echo "  $0"
+    echo "  $0 50 60"
     exit 1
 }
 
-# Show usage if no args or help flag
+# Show usage if help flag or no arguments
 case "$1" in
     ""|"-h"|"--help")
         usage
+        exit 0
         ;;
 esac
+
+# Check for required arguments
+if [ $# -lt 1 ]; then
+    echo "Error: Missing required arguments"
+    usage
+    exit 1
+fi
 
 # Check if docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -32,14 +43,11 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check if faucet address is provided
-if [ -z "$1" ]; then
-    usage
-fi
-
-FAUCET_ADDRESS=$1
-AMOUNT_BTC=${2:-100}  # Default to 100 if not provided
-MINING_INTERVAL=${3:-30}  # Default to 30 seconds if not provided
+# Test private key and its corresponding address (for regtest only!)
+# FAUCET_PRIVATE_KEY="0xee01cfc3f08cdb020064f31ff1a993aa9ecc1d38e684665742faa705685532a6"
+FAUCET_ADDRESS="bcrt1qvj7e5av2eqrhhvle56f9aqtjpxgywwnt5tem5y"
+AMOUNT_BTC=${1:-100}  # Default to 100 if not provided
+MINING_INTERVAL=${2:-30}  # Default to 30 seconds if not provided
 BITCOIN_CLI="/srv/explorer/bitcoin/bin/bitcoin-cli -conf=/data/.bitcoin.conf -datadir=/data/bitcoin -regtest"
 
 # Start the container and capture its ID
